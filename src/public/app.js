@@ -13,6 +13,7 @@ let postsCache = [];
 let contasCache = [];
 let usuariosCache = [];
 let instagramConfig = null;
+let facebookConfig = null;
 let postEditandoId = null;
 let currentTab = "posts";
 
@@ -540,7 +541,7 @@ async function publicarPost(id) {
   const { ok, status, data } = await api(`/api/posts/${id}/publicar`, { method: "POST" });
   if (!ok) { toast(data?.error || `Falha ao publicar (HTTP ${status}).`, "error"); return; }
   if (data?.modo === "simulado") toast("Publicação simulada: a conta é manual e não tem token da Meta.", "warn");
-  else toast(data?.publicadoUrl ? "Publicado no Instagram." : "Publicado.", "ok");
+  else toast(data?.message || (data?.publicadoUrl ? "Publicado com sucesso." : "Publicado."), "ok");
   await abrirDetalhe(id);
   await carregarPosts();
 }
@@ -599,6 +600,7 @@ async function carregarIntegracaoInstagram() {
   const botao = $("btn-ig-conectar");
   const aviso = $("ig-config-aviso");
   const callout = $("ig-callout");
+  if (!estado) return;
   limparFilhos(callout);
 
   const { ok, data } = await api("/api/instagram/status");
@@ -622,13 +624,12 @@ async function carregarIntegracaoInstagram() {
     $("ig-status-valor").textContent = "pronta para conectar";
     aviso.textContent = data.appId ? `App ID ${data.appId}` : "Credenciais presentes";
     botao.disabled = false;
-    callout.appendChild(criar("div", "callout ok", "Integração ativa. O botão abre a autorização oficial da Meta e o callback cria a conta automaticamente."));
+    callout.appendChild(criar("div", "callout ok", "Integração ativa. Requer permissões de conteúdo do Instagram no app da Meta."));
   } else {
     estado.textContent = "não configurada";
     $("ig-status-valor").textContent = "faltam credenciais";
     aviso.textContent = "Defina META_APP_ID e META_APP_SECRET no ambiente.";
     botao.disabled = true;
-    callout.appendChild(criar("div", "callout warn", "Sem META_APP_ID e META_APP_SECRET o OAuth não inicia. A conta manual abaixo continua disponível para demonstração."));
   }
 }
 
@@ -641,11 +642,59 @@ async function conectarInstagram() {
   window.location.href = data.url;
 }
 
+async function carregarIntegracaoFacebook() {
+  const estado = $("fb-estado");
+  const botao = $("btn-fb-conectar");
+  const aviso = $("fb-config-aviso");
+  const callout = $("fb-callout");
+  if (!estado) return;
+  limparFilhos(callout);
+
+  const { ok, data } = await api("/api/facebook/status");
+  facebookConfig = ok ? data : null;
+
+  if (!ok || !data) {
+    estado.textContent = "indisponível";
+    $("fb-status-valor").textContent = "falha na consulta";
+    aviso.textContent = "Não foi possível consultar a integração.";
+    botao.disabled = true;
+    return;
+  }
+
+  $("fb-contas-total").textContent = data.contasConectadas ?? 0;
+  $("fb-versao").textContent = data.versaoApi || "—";
+  $("fb-escopos").textContent = (data.escopos || []).join(", ") || "—";
+  $("fb-escopos").title = (data.escopos || []).join(", ");
+
+  if (data.configurado) {
+    estado.textContent = "configurada";
+    $("fb-status-valor").textContent = "pronta para conectar";
+    aviso.textContent = data.appId ? `App ID ${data.appId}` : "Credenciais presentes";
+    botao.disabled = false;
+    callout.appendChild(criar("div", "callout ok", "Integração ativa. O botão abre a autorização oficial da Meta e conecta suas Páginas do Facebook."));
+  } else {
+    estado.textContent = "não configurada";
+    $("fb-status-valor").textContent = "faltam credenciais";
+    aviso.textContent = "Defina META_APP_ID e META_APP_SECRET no ambiente.";
+    botao.disabled = true;
+  }
+}
+
+async function conectarFacebook() {
+  const { ok, status, data } = await api("/api/facebook/conectar");
+  if (!ok || !data?.url) {
+    toast(data?.error || `Falha ao iniciar o OAuth (HTTP ${status}).`, "error");
+    return;
+  }
+  window.location.href = data.url;
+}
+
 async function carregarContas() {
   const tbody = $("contas-linhas");
   limparFilhos(tbody);
   $("contas-vazio").hidden = true;
 
+  await carregarIntegracaoFacebook();
   await carregarIntegracaoInstagram();
 
   const { ok, data } = await api("/api/contas-sociais");
@@ -667,7 +716,7 @@ async function carregarContas() {
     if (conta.username) contaTd.appendChild(criar("div", "mono", "@" + conta.username));
     tr.appendChild(contaTd);
 
-    tr.appendChild(criar("td", "mono", conta.instagramUserId || conta.identificador || "—"));
+    tr.appendChild(criar("td", "mono", conta.instagramUserId || conta.facebookPageId || conta.identificador || "—"));
 
     const origem = criar("td");
     origem.appendChild(criar("span", "tag" + (conta.conectadoVia === "api" ? " pro" : ""), conta.conectadoVia === "api" ? "API oficial" : "manual"));
@@ -683,7 +732,7 @@ async function carregarContas() {
     if (temPermissao("gerenciar:contas")) {
       if (conta.conectadoVia === "api") {
         const desconectar = criar("button", "btn ghost small", "Desconectar");
-        desconectar.onclick = () => desconectarInstagram(conta.id);
+        desconectar.onclick = () => desconectarConta(conta.id, conta.rede);
         acoesTd.appendChild(desconectar);
       } else {
         const remover = criar("button", "btn danger small", "Remover");
@@ -713,9 +762,11 @@ async function criarConta(evento) {
   await carregarContas();
 }
 
-async function desconectarInstagram(id) {
-  if (!window.confirm("Desconectar esta conta do Instagram? O token será apagado e a publicação real deixa de funcionar.")) return;
-  const { ok, status, data } = await api(`/api/instagram/${id}/desconectar`, { method: "POST" });
+async function desconectarConta(id, rede) {
+  const rotulo = rede === "facebook" ? "Facebook" : "Instagram";
+  if (!window.confirm(`Desconectar esta conta do ${rotulo}? O token será apagado e a publicação real deixa de funcionar.`)) return;
+  const base = rede === "facebook" ? "/api/facebook" : "/api/instagram";
+  const { ok, status, data } = await api(`${base}/${id}/desconectar`, { method: "POST" });
   if (!ok) { toast(data?.error || `Falha ao desconectar (HTTP ${status}).`, "error"); return; }
   toast("Conta desconectada. O token foi removido.", "ok");
   await carregarContas();
@@ -808,6 +859,8 @@ const NOMES_ACAO = {
   checkout_pro_iniciado: "checkout Pro iniciado",
   instagram_conectado: "Instagram conectado",
   instagram_desconectado: "Instagram desconectado",
+  facebook_conectado: "Facebook conectado",
+  facebook_desconectado: "Facebook desconectado",
 };
 
 async function carregarLogs() {
@@ -945,15 +998,18 @@ async function logout() {
   }
 
   const ig = params.get("instagram");
-  if (ig) {
+  const fb = params.get("facebook");
+  if (ig || fb) {
     history.replaceState({}, "", "/painel");
-    if (ig === "conectado") {
-      toast(`${params.get("contas") || "1"} conta(s) conectada(s) ao Instagram.`, "ok");
-      abrirTab("contas");
-    } else if (ig === "erro") {
-      toast(params.get("motivo") || "Falha na conexão com o Instagram.", "error");
-      abrirTab("contas");
-    }
+    abrirTab("contas");
+  }
+  if (ig) {
+    if (ig === "conectado") toast(`${params.get("contas") || "1"} conta(s) conectada(s) ao Instagram.`, "ok");
+    else if (ig === "erro") toast(params.get("motivo") || "Falha na conexão com o Instagram.", "error");
+  }
+  if (fb) {
+    if (fb === "conectado") toast(`${params.get("contas") || "1"} página(s) conectada(s) ao Facebook.`, "ok");
+    else if (fb === "erro") toast(params.get("motivo") || "Falha na conexão com o Facebook.", "error");
   }
 
   tratarRetornoCheckout();

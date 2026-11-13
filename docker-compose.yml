@@ -63,6 +63,7 @@ services:
       META_GRAPH_VERSION: ${META_GRAPH_VERSION:-v22.0}
       # Escopos OAuth (ajuste se a Meta rejeitar algum no seu tipo de app/login).
       META_SCOPES: ${META_SCOPES:-pages_show_list,pages_read_engagement,instagram_basic,instagram_content_publish}
+      META_SCOPES_FACEBOOK: ${META_SCOPES_FACEBOOK:-pages_show_list,pages_read_engagement,pages_manage_posts}
       # Cifra o token da Página e assina state/URLs públicas. Mantenha fixo.
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-79244424fd076e0d96af8911b7c4af96f429cacc9237a97fffd363eb08a998a6}
       # Segredo compartilhado com o auth-service para o webhook do Stripe

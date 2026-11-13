@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel — MetaSass</title>
-  <link rel="stylesheet" href="/style.css?v=3">
+  <link rel="stylesheet" href="/style.css?v=4">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23111110'/%3E%3Ctext x='50' y='69' font-family='Arial,sans-serif' font-size='58' font-weight='700' fill='%23ffffff' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
 </head>
 <body>
@@ -66,25 +66,53 @@
         <div class="page-head">
           <div>
             <h1>Contas sociais</h1>
-            <p>Conexão oficial com o Instagram e contas manuais usadas nos posts.</p>
+            <p>Conexão oficial com Facebook/Instagram e contas manuais usadas nos posts.</p>
           </div>
           <button class="btn ghost small" onclick="carregarContas()">↻ Atualizar</button>
         </div>
 
         <div class="panel">
+          <div class="panel-head"><h2>Integração Facebook (Página) · Meta Graph API</h2><span class="tag" id="fb-estado">verificando</span></div>
+          <div class="panel-body">
+            <div class="integration">
+              <div>
+                <h2>Conectar uma Página do Facebook</h2>
+                <p>Conecte as Páginas que você administra para publicar fotos e legendas de verdade pelo MetaSass. O token da Página é guardado criptografado.</p>
+                <ol>
+                  <li>Você precisa ser administrador da Página do Facebook</li>
+                  <li>App da Meta com permissões de Página (ex.: <code>pages_manage_posts</code>)</li>
+                  <li>Use o mesmo callback cadastrado: <span class="mono">/api/instagram/callback</span></li>
+                </ol>
+                <div class="integration-actions">
+                  <button class="btn" id="btn-fb-conectar" onclick="conectarFacebook()" disabled>Conectar com Facebook</button>
+                  <span class="mono" id="fb-config-aviso">Verificando configuração…</span>
+                </div>
+              </div>
+              <div class="integration-status">
+                <div class="line"><span>Status</span><span id="fb-status-valor">—</span></div>
+                <div class="line"><span>Páginas via API</span><span id="fb-contas-total">0</span></div>
+                <div class="line"><span>Versão da API</span><span id="fb-versao">—</span></div>
+                <div class="line"><span>Escopos</span><span id="fb-escopos">—</span></div>
+              </div>
+            </div>
+            <div id="fb-callout" style="margin-top:14px"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:18px">
           <div class="panel-head"><h2>Integração Instagram · Meta Graph API</h2><span class="tag" id="ig-estado">verificando</span></div>
           <div class="panel-body">
             <div class="integration">
               <div>
                 <h2>Conectar com a conta profissional</h2>
-                <p>Ao clicar, o MetaSass abre a autorização oficial da Meta. O código volta para o callback público, vira um token de Página e é guardado criptografado. Nenhuma senha do Instagram passa pelo sistema.</p>
+                <p>Conecte uma conta profissional do Instagram vinculada a uma Página para publicar de verdade. Requer as permissões de conteúdo do Instagram no app da Meta.</p>
                 <ol>
                   <li>Conta profissional do Instagram (Business ou Creator)</li>
                   <li>Página do Facebook vinculada a essa conta</li>
-                  <li>App da Meta com as permissões de leitura e publicação</li>
+                  <li>Permissões de Instagram liberadas no app da Meta</li>
                 </ol>
                 <div class="integration-actions">
-                  <button class="btn" id="btn-ig-conectar" onclick="conectarInstagram()" disabled>Conectar com Instagram</button>
+                  <button class="btn ghost" id="btn-ig-conectar" onclick="conectarInstagram()" disabled>Conectar com Instagram</button>
                   <span class="mono" id="ig-config-aviso">Verificando configuração…</span>
                 </div>
               </div>
@@ -259,6 +287,6 @@
 
   <div id="toasts" aria-live="polite"></div>
 
-  <script src="/app.js?v=3"></script>
+  <script src="/app.js?v=4"></script>
 </body>
 </html>

@@ -19,6 +19,7 @@ import {
   trocarCodigoPorToken,
   urlAutorizacao,
 } from "../services/instagram";
+import { processarCallbackFacebook } from "./facebook";
 import type { Env } from "../types";
 
 /**
@@ -49,6 +50,11 @@ ig.get("/callback", async (c) => {
   const exp = Number(dados?.exp);
   if (!dados || !Number.isInteger(uid) || !Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) {
     return redirecionarErro(c, "State inválido ou expirado. Inicie a conexão novamente.");
+  }
+
+  // O mesmo redirect URI cadastrado na Meta atende Instagram e Facebook.
+  if (dados.provider === "facebook") {
+    return processarCallbackFacebook(c, code, dados);
   }
 
   try {

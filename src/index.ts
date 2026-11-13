@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth";
 import postsRoutes, { midiaPublica } from "./routes/posts";
 import contasRoutes from "./routes/contas-sociais";
 import instagramRoutes from "./routes/instagram";
+import facebookRoutes from "./routes/facebook";
 import usuariosRoutes from "./routes/usuarios";
 import logsRoutes from "./routes/logs";
 import planoRoutes from "./routes/plano";
@@ -28,6 +29,8 @@ app.route("/api/posts", postsRoutes);
 app.route("/api/contas-sociais", contasRoutes);
 // OAuth oficial da Meta: conectar Instagram e desconectar conta.
 app.route("/api/instagram", instagramRoutes);
+// OAuth oficial da Meta: conectar Páginas do Facebook e desconectar.
+app.route("/api/facebook", facebookRoutes);
 // Link público e assinado que a Meta baixa para publicar a imagem.
 app.route("/api/midia-publica", midiaPublica);
 // Exclusivo de admin: listar usuários e trocar papel.

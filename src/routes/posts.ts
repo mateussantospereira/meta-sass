@@ -9,6 +9,7 @@ import { registrar, ipDe } from "../services/log-service";
 import { LIMITE_POSTS_GRATIS } from "../services/plano";
 import { detectarFormato, enviarMidia, obterMidia, removerMidia, TAMANHO_MAX_MIDIA } from "../services/minio";
 import { publicarNoInstagram, urlPublicaMidia } from "../services/instagram";
+import { publicarNaPaginaFacebook } from "../services/facebook";
 import { decifrar, urlMidiaValida } from "../services/cripto";
 import { perfilPublico, type Papel } from "../services/auth-service";
 import type { Env } from "../types";
@@ -344,16 +345,12 @@ recursos.post("/:id/publicar", exigePermissao("publicar:post"), async (c) => {
 
   // Caminho real: conta conectada pelo OAuth da Meta.
   if (conta?.conectadoVia === "api") {
-    if (!conta.ativa || !conta.accessTokenCifrado || !conta.instagramUserId) {
+    const token = conta.accessTokenCifrado ? decifrar(conta.accessTokenCifrado) : null;
+    if (!conta.ativa || !token) {
       return c.json(
-        { error: "Esta conta do Instagram está desconectada. Reconecte pelo OAuth para publicar." },
+        { error: "Esta conta está desconectada ou o token é inválido. Reconecte pelo OAuth para publicar." },
         409
       );
-    }
-
-    const token = decifrar(conta.accessTokenCifrado);
-    if (!token) {
-      return c.json({ error: "Não foi possível ler o token da conta. Reconecte o Instagram." }, 500);
     }
 
     const [primeiraMidia] = await db
@@ -368,6 +365,56 @@ recursos.post("/:id/publicar", exigePermissao("publicar:post"), async (c) => {
     }
 
     try {
+      if (conta.rede === "facebook") {
+        const pageId = conta.facebookPageId || conta.identificador;
+        if (!pageId) {
+          return c.json({ error: "Página do Facebook sem identificador. Reconecte a conta." }, 409);
+        }
+
+        const resultado = await publicarNaPaginaFacebook({
+          pageId,
+          tokenPagina: token,
+          imagemUrl: urlPublicaMidia(primeiraMidia.id),
+          legenda: post.legenda || post.titulo,
+        });
+
+        await db
+          .update(posts)
+          .set({
+            status: "publicado",
+            publicadoEm: new Date(),
+            instagramMediaId: resultado.postId,
+            publicadoUrl: resultado.permalink,
+          })
+          .where(eq(posts.id, id));
+
+        await registrar({
+          acao: "post_publicado",
+          usuario_id: c.get("usuarioId"),
+          usuario: c.get("nome"),
+          papel: c.get("role"),
+          recurso: `post:${id}`,
+          detalhe: `${post.titulo} · Facebook ${resultado.postId}`,
+          ip: ipDe(c),
+        });
+
+        return c.json({
+          message: "Post publicado no Facebook",
+          modo: "api",
+          publicadoUrl: resultado.permalink,
+          instagramMediaId: resultado.postId,
+          post: { id, status: "publicado" },
+        });
+      }
+
+      // Instagram
+      if (!conta.instagramUserId) {
+        return c.json(
+          { error: "Esta conta do Instagram está desconectada. Reconecte pelo OAuth para publicar." },
+          409
+        );
+      }
+
       const resultado = await publicarNoInstagram({
         instagramUserId: conta.instagramUserId,
         tokenPagina: token,
@@ -404,7 +451,7 @@ recursos.post("/:id/publicar", exigePermissao("publicar:post"), async (c) => {
       });
     } catch (erro) {
       const motivo = erro instanceof Error ? erro.message : String(erro);
-      console.error(`[posts] falha ao publicar ${id} no Instagram: ${motivo}`);
+      console.error(`[posts] falha ao publicar ${id} (${conta.rede}): ${motivo}`);
       return c.json({ error: `A Meta recusou a publicação: ${motivo}` }, 502);
     }
   }
