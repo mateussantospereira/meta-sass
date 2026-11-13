@@ -12,6 +12,7 @@ let eu = { usuarioId: null, nome: "", email: "", role: "", premium: false, permi
 let postsCache = [];
 let contasCache = [];
 let usuariosCache = [];
+let instagramConfig = null;
 let postEditandoId = null;
 let currentTab = "posts";
 
@@ -198,8 +199,8 @@ function renderPosts() {
     card.appendChild(legenda);
 
     const meta = criar("div", "meta");
-    meta.appendChild(criar("span", null, "🗓️ " + fmtData(post.dataAgendada)));
-    if (post.publicadoEm) meta.appendChild(criar("span", null, "✅ " + fmtData(post.publicadoEm, false)));
+    meta.appendChild(criar("span", null, fmtData(post.dataAgendada)));
+    if (post.publicadoEm) meta.appendChild(criar("span", null, "publicado " + fmtData(post.publicadoEm, false)));
     card.appendChild(meta);
 
     grid.appendChild(card);
@@ -408,6 +409,18 @@ function renderDetalhePost(data) {
     row.appendChild(alvo);
     dados.appendChild(row);
   });
+  if (post.publicadoUrl) {
+    const row = criar("div", "row");
+    row.appendChild(criar("span", null, "Publicação"));
+    const alvo = criar("span");
+    const link = criar("a", null, "Abrir no Instagram");
+    link.href = post.publicadoUrl;
+    link.target = "_blank";
+    link.rel = "noopener";
+    alvo.appendChild(link);
+    row.appendChild(alvo);
+    dados.appendChild(row);
+  }
   esquerda.appendChild(dados);
 
   esquerda.appendChild(criar("div", "subhead", "Mídias do post"));
@@ -441,7 +454,7 @@ function renderDetalhePost(data) {
     input.accept = "image/png,image/jpeg,image/gif,image/webp";
     input.onchange = () => enviarMidia(input, post.id);
     label.appendChild(input);
-    label.appendChild(criar("span", null, "📷 Anexar imagem"));
+    label.appendChild(criar("span", null, "Anexar imagem"));
     upload.appendChild(label);
     upload.appendChild(criar("span", "mono", "PNG, JPEG, GIF ou WebP · até 5 MB"));
     esquerda.appendChild(upload);
@@ -483,7 +496,7 @@ function renderDetalhePost(data) {
   acoes.appendChild(fechar);
 
   if (perms.editar) {
-    const editar = criar("button", "btn soft", "✏️ Editar");
+    const editar = criar("button", "btn soft", "Editar");
     editar.onclick = () => editarPost(post);
     acoes.appendChild(editar);
   }
@@ -493,13 +506,13 @@ function renderDetalhePost(data) {
     ajustes.onclick = () => aprovarPost(post.id, "ajustes");
     acoes.appendChild(ajustes);
 
-    const aprovar = criar("button", "btn success", "✅ Aprovar");
+    const aprovar = criar("button", "btn success", "Aprovar");
     aprovar.onclick = () => aprovarPost(post.id, "aprovado");
     acoes.appendChild(aprovar);
   }
 
   if (perms.publicar && post.status !== "publicado" && temPermissao("publicar:post")) {
-    const publicar = criar("button", "btn", "🚀 Publicar");
+    const publicar = criar("button", "btn", "Publicar");
     publicar.onclick = () => publicarPost(post.id);
     acoes.appendChild(publicar);
   }
@@ -519,14 +532,15 @@ async function carregarImagemComToken(url, img) {
     img.src = URL.createObjectURL(blob);
   } catch {
     img.alt = "Mídia indisponível";
-    img.style.background = "linear-gradient(135deg, rgba(124,92,255,.35), rgba(255,93,162,.25))";
+    img.style.background = "var(--bg-soft)";
   }
 }
 
 async function publicarPost(id) {
   const { ok, status, data } = await api(`/api/posts/${id}/publicar`, { method: "POST" });
   if (!ok) { toast(data?.error || `Falha ao publicar (HTTP ${status}).`, "error"); return; }
-  toast("Post publicado.", "ok");
+  if (data?.modo === "simulado") toast("Publicação simulada: a conta é manual e não tem token da Meta.", "warn");
+  else toast(data?.publicadoUrl ? "Publicado no Instagram." : "Publicado.", "ok");
   await abrirDetalhe(id);
   await carregarPosts();
 }
@@ -580,10 +594,59 @@ async function removerMidia(postId, midiaId) {
 }
 
 /* --------------------------------------------------------------- contas --- */
+async function carregarIntegracaoInstagram() {
+  const estado = $("ig-estado");
+  const botao = $("btn-ig-conectar");
+  const aviso = $("ig-config-aviso");
+  const callout = $("ig-callout");
+  limparFilhos(callout);
+
+  const { ok, data } = await api("/api/instagram/status");
+  instagramConfig = ok ? data : null;
+
+  if (!ok || !data) {
+    estado.textContent = "indisponível";
+    $("ig-status-valor").textContent = "falha na consulta";
+    aviso.textContent = "Não foi possível consultar a integração.";
+    botao.disabled = true;
+    return;
+  }
+
+  $("ig-contas-total").textContent = data.contasConectadas ?? 0;
+  $("ig-versao").textContent = data.versaoApi || "—";
+  $("ig-redirect").textContent = data.redirectUri || "—";
+  $("ig-redirect").title = data.redirectUri || "";
+
+  if (data.configurado) {
+    estado.textContent = "configurada";
+    $("ig-status-valor").textContent = "pronta para conectar";
+    aviso.textContent = data.appId ? `App ID ${data.appId}` : "Credenciais presentes";
+    botao.disabled = false;
+    callout.appendChild(criar("div", "callout ok", "Integração ativa. O botão abre a autorização oficial da Meta e o callback cria a conta automaticamente."));
+  } else {
+    estado.textContent = "não configurada";
+    $("ig-status-valor").textContent = "faltam credenciais";
+    aviso.textContent = "Defina META_APP_ID e META_APP_SECRET no ambiente.";
+    botao.disabled = true;
+    callout.appendChild(criar("div", "callout warn", "Sem META_APP_ID e META_APP_SECRET o OAuth não inicia. A conta manual abaixo continua disponível para demonstração."));
+  }
+}
+
+async function conectarInstagram() {
+  const { ok, status, data } = await api("/api/instagram/conectar");
+  if (!ok || !data?.url) {
+    toast(data?.error || `Falha ao iniciar o OAuth (HTTP ${status}).`, "error");
+    return;
+  }
+  window.location.href = data.url;
+}
+
 async function carregarContas() {
   const tbody = $("contas-linhas");
   limparFilhos(tbody);
   $("contas-vazio").hidden = true;
+
+  await carregarIntegracaoInstagram();
 
   const { ok, data } = await api("/api/contas-sociais");
   if (!ok) return;
@@ -598,17 +661,35 @@ async function carregarContas() {
   contasCache.forEach((conta) => {
     const tr = document.createElement("tr");
     tr.appendChild(criar("td", null, conta.rede));
-    tr.appendChild(criar("td", null, conta.nome));
-    tr.appendChild(criar("td", "mono", conta.identificador || "—"));
+
+    const contaTd = criar("td");
+    contaTd.appendChild(criar("strong", null, conta.nome));
+    if (conta.username) contaTd.appendChild(criar("div", "mono", "@" + conta.username));
+    tr.appendChild(contaTd);
+
+    tr.appendChild(criar("td", "mono", conta.instagramUserId || conta.identificador || "—"));
+
+    const origem = criar("td");
+    origem.appendChild(criar("span", "tag" + (conta.conectadoVia === "api" ? " pro" : ""), conta.conectadoVia === "api" ? "API oficial" : "manual"));
+    tr.appendChild(origem);
+
+    tr.appendChild(criar("td", "mono", conta.tokenExpiraEm ? fmtData(conta.tokenExpiraEm, false) : "—"));
+
     const statusTd = criar("td");
     statusTd.appendChild(criar("span", "tag", conta.ativa ? "ativa" : "inativa"));
     tr.appendChild(statusTd);
 
     const acoesTd = criar("td");
     if (temPermissao("gerenciar:contas")) {
-      const remover = criar("button", "btn danger small", "Remover");
-      remover.onclick = () => removerConta(conta.id);
-      acoesTd.appendChild(remover);
+      if (conta.conectadoVia === "api") {
+        const desconectar = criar("button", "btn ghost small", "Desconectar");
+        desconectar.onclick = () => desconectarInstagram(conta.id);
+        acoesTd.appendChild(desconectar);
+      } else {
+        const remover = criar("button", "btn danger small", "Remover");
+        remover.onclick = () => removerConta(conta.id);
+        acoesTd.appendChild(remover);
+      }
     }
     tr.appendChild(acoesTd);
     tbody.appendChild(tr);
@@ -626,10 +707,17 @@ async function criarConta(evento) {
     }),
   });
   if (!ok) { toast(data?.error || `Falha ao conectar (HTTP ${status}).`, "error"); return; }
-  $("form-post")?.reset();
   $("conta-nome").value = "";
   $("conta-identificador").value = "";
-  toast("Conta social conectada.", "ok");
+  toast("Conta manual cadastrada.", "ok");
+  await carregarContas();
+}
+
+async function desconectarInstagram(id) {
+  if (!window.confirm("Desconectar esta conta do Instagram? O token será apagado e a publicação real deixa de funcionar.")) return;
+  const { ok, status, data } = await api(`/api/instagram/${id}/desconectar`, { method: "POST" });
+  if (!ok) { toast(data?.error || `Falha ao desconectar (HTTP ${status}).`, "error"); return; }
+  toast("Conta desconectada. O token foi removido.", "ok");
   await carregarContas();
 }
 
@@ -718,6 +806,8 @@ const NOMES_ACAO = {
   assinatura_pro_ativada: "assinatura Pro ativada",
   assinatura_pro_cancelada: "assinatura Pro cancelada",
   checkout_pro_iniciado: "checkout Pro iniciado",
+  instagram_conectado: "Instagram conectado",
+  instagram_desconectado: "Instagram desconectado",
 };
 
 async function carregarLogs() {
@@ -765,7 +855,7 @@ async function carregarPlano() {
   limparFilhos(alvo);
   const card = criar("div", "plan-card" + (data.premium ? " pro" : ""));
 
-  const titulo = criar("h2", null, data.premium ? "✨ Plano Pro ativo" : "Plano Gratuito");
+  const titulo = criar("h2", null, data.premium ? "Plano Pro ativo" : "Plano Gratuito");
   titulo.style.fontSize = "1.2rem";
   titulo.style.marginBottom = "6px";
   card.appendChild(titulo);
@@ -852,6 +942,18 @@ async function logout() {
 
   if (postId) {
     await abrirDetalhe(Number(postId));
+  }
+
+  const ig = params.get("instagram");
+  if (ig) {
+    history.replaceState({}, "", "/painel");
+    if (ig === "conectado") {
+      toast(`${params.get("contas") || "1"} conta(s) conectada(s) ao Instagram.`, "ok");
+      abrirTab("contas");
+    } else if (ig === "erro") {
+      toast(params.get("motivo") || "Falha na conexão com o Instagram.", "error");
+      abrirTab("contas");
+    }
   }
 
   tratarRetornoCheckout();

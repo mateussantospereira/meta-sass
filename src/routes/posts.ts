@@ -8,6 +8,8 @@ import { exigePermissao } from "../middleware/permissao";
 import { registrar, ipDe } from "../services/log-service";
 import { LIMITE_POSTS_GRATIS } from "../services/plano";
 import { detectarFormato, enviarMidia, obterMidia, removerMidia, TAMANHO_MAX_MIDIA } from "../services/minio";
+import { publicarNoInstagram, urlPublicaMidia } from "../services/instagram";
+import { decifrar, urlMidiaValida } from "../services/cripto";
 import { perfilPublico, type Papel } from "../services/auth-service";
 import type { Env } from "../types";
 
@@ -94,6 +96,7 @@ recursos.get("/", exigePermissao("ler:post"), async (c) => {
       dataAgendada: posts.dataAgendada,
       status: posts.status,
       publicadoEm: posts.publicadoEm,
+      publicadoUrl: posts.publicadoUrl,
       criadoEm: posts.criadoEm,
       atualizadoEm: posts.atualizadoEm,
       contaNome: contasSociais.nome,
@@ -325,7 +328,7 @@ recursos.delete("/:id", exigePermissao("apagar:post"), async (c) => {
   return c.json({ message: "Post removido" });
 });
 
-/** POST /api/posts/:id/publicar — ação de negócio que o cliente não pode fazer. */
+/** POST /api/posts/:id/publicar — publica de verdade quando a conta veio do OAuth. */
 recursos.post("/:id/publicar", exigePermissao("publicar:post"), async (c) => {
   const id = Number(c.req.param("id"));
   const post = await carregarPost(id);
@@ -337,6 +340,76 @@ recursos.post("/:id/publicar", exigePermissao("publicar:post"), async (c) => {
     return c.json({ error: "Este post já foi publicado." }, 409);
   }
 
+  const conta = await carregarConta(post.contaSocialId);
+
+  // Caminho real: conta conectada pelo OAuth da Meta.
+  if (conta?.conectadoVia === "api") {
+    if (!conta.ativa || !conta.accessTokenCifrado || !conta.instagramUserId) {
+      return c.json(
+        { error: "Esta conta do Instagram está desconectada. Reconecte pelo OAuth para publicar." },
+        409
+      );
+    }
+
+    const token = decifrar(conta.accessTokenCifrado);
+    if (!token) {
+      return c.json({ error: "Não foi possível ler o token da conta. Reconecte o Instagram." }, 500);
+    }
+
+    const [primeiraMidia] = await db
+      .select()
+      .from(midias)
+      .where(eq(midias.postId, id))
+      .orderBy(midias.id)
+      .limit(1);
+
+    if (!primeiraMidia) {
+      return c.json({ error: "A publicação real exige pelo menos uma imagem anexada ao post." }, 400);
+    }
+
+    try {
+      const resultado = await publicarNoInstagram({
+        instagramUserId: conta.instagramUserId,
+        tokenPagina: token,
+        imagemUrl: urlPublicaMidia(primeiraMidia.id),
+        legenda: post.legenda || post.titulo,
+      });
+
+      await db
+        .update(posts)
+        .set({
+          status: "publicado",
+          publicadoEm: new Date(),
+          instagramMediaId: resultado.mediaId,
+          publicadoUrl: resultado.permalink,
+        })
+        .where(eq(posts.id, id));
+
+      await registrar({
+        acao: "post_publicado",
+        usuario_id: c.get("usuarioId"),
+        usuario: c.get("nome"),
+        papel: c.get("role"),
+        recurso: `post:${id}`,
+        detalhe: `${post.titulo} · Instagram ${resultado.mediaId}`,
+        ip: ipDe(c),
+      });
+
+      return c.json({
+        message: "Post publicado no Instagram",
+        modo: "api",
+        publicadoUrl: resultado.permalink,
+        instagramMediaId: resultado.mediaId,
+        post: { id, status: "publicado" },
+      });
+    } catch (erro) {
+      const motivo = erro instanceof Error ? erro.message : String(erro);
+      console.error(`[posts] falha ao publicar ${id} no Instagram: ${motivo}`);
+      return c.json({ error: `A Meta recusou a publicação: ${motivo}` }, 502);
+    }
+  }
+
+  // Conta manual: simulação explícita, registrada como tal na auditoria.
   await db
     .update(posts)
     .set({ status: "publicado", publicadoEm: new Date() })
@@ -348,11 +421,15 @@ recursos.post("/:id/publicar", exigePermissao("publicar:post"), async (c) => {
     usuario: c.get("nome"),
     papel: c.get("role"),
     recurso: `post:${id}`,
-    detalhe: post.titulo,
+    detalhe: `${post.titulo} · simulado (conta manual)`,
     ip: ipDe(c),
   });
 
-  return c.json({ message: "Post publicado", post: { id, status: "publicado" } });
+  return c.json({
+    message: "Publicação simulada (conta manual)",
+    modo: "simulado",
+    post: { id, status: "publicado" },
+  });
 });
 
 /** POST /api/posts/:id/aprovar — cliente atribuído aprova ou pede ajustes. */
@@ -547,6 +624,46 @@ recursos.delete("/:id/midia/:midiaId", exigePermissao("enviar:midia"), async (c)
   });
 
   return c.json({ message: "Mídia removida" });
+});
+
+/* -------------------------------------------------------------------------- */
+/* MÍDIA PÚBLICA ASSINADA — usada pela Meta para baixar a imagem na publicação */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A Graph API baixa a imagem de uma URL pública. Em vez de expor o MinIO,
+ * emitimos um link com expiração e HMAC. Sem assinatura válida, 403.
+ */
+export const midiaPublica = new Hono();
+
+midiaPublica.get("/:midiaId", async (c) => {
+  const midiaId = Number(c.req.param("midiaId"));
+  const exp = Number(c.req.query("exp"));
+  const sig = c.req.query("sig") ?? "";
+
+  if (!Number.isInteger(midiaId) || !urlMidiaValida(midiaId, exp, sig)) {
+    return c.json({ error: "Link expirado ou assinatura inválida" }, 403);
+  }
+
+  const [midia] = await db.select().from(midias).where(eq(midias.id, midiaId)).limit(1);
+  if (!midia) return c.json({ error: "Mídia não encontrada" }, 404);
+
+  try {
+    const arquivo = await obterMidia(midia.chaveObjeto);
+    if (!arquivo) return c.json({ error: "Arquivo não encontrado no armazenamento" }, 404);
+
+    return new Response(arquivo.bytes as unknown as ConstructorParameters<typeof Response>[0], {
+      headers: {
+        "Content-Type": arquivo.contentType,
+        "Content-Length": String(arquivo.bytes.length),
+        "Cache-Control": "public, max-age=300",
+      },
+    });
+  } catch (erro) {
+    const motivo = erro instanceof Error ? erro.message : String(erro);
+    console.error(`[midia-publica] falha ao ler ${midiaId}: ${motivo}`);
+    return c.json({ error: "Armazenamento de objetos indisponível no momento" }, 503);
+  }
 });
 
 export default recursos;

@@ -55,6 +55,14 @@ services:
       STRIPE_PRICE_LABEL: ${STRIPE_PRICE_LABEL:-R$ 29,00/mês}
       LIMITE_POSTS_GRATIS: ${LIMITE_POSTS_GRATIS:-5}
       APP_PUBLIC_URL: ${APP_PUBLIC_URL:-https://mateus-pereira-isw055.lapps.studio}
+      # Integração real com o Instagram (OAuth da Meta + Graph API).
+      # Sem APP_ID/SECRET o botão fica desabilitado; contas manuais seguem.
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      META_REDIRECT_URI: ${META_REDIRECT_URI:-}
+      META_GRAPH_VERSION: ${META_GRAPH_VERSION:-v22.0}
+      # Cifra o token da Página e assina state/URLs públicas. Mantenha fixo.
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-79244424fd076e0d96af8911b7c4af96f429cacc9237a97fffd363eb08a998a6}
       # Segredo compartilhado com o auth-service para o webhook do Stripe
       # marcar/desmarcar o plano Pro de um usuário.
       INTERNAL_SYNC_TOKEN: ${INTERNAL_SYNC_TOKEN:-c5bbcf267c5a85f6cae783edf698e59a5c90f76f9be5381e}
@@ -177,6 +185,11 @@ services:
     networks:
       - interna
     mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: always
 
 networks:

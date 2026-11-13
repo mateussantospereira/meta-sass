@@ -45,6 +45,15 @@ export const contasSociais = mysqlTable(
     rede: varchar("rede", { length: 20 }).notNull(), // instagram | facebook
     nome: varchar("nome", { length: 120 }).notNull(),
     identificador: varchar("identificador", { length: 160 }),
+    /** Dados devolvidos pelo OAuth da Meta (null em conta manual). */
+    instagramUserId: varchar("instagram_user_id", { length: 64 }),
+    facebookPageId: varchar("facebook_page_id", { length: 64 }),
+    username: varchar("username", { length: 120 }),
+    /** Token da Página cifrado com AES-256-GCM. Nunca vai para a resposta. */
+    accessTokenCifrado: text("access_token_cifrado"),
+    tokenExpiraEm: timestamp("token_expira_em"),
+    conectadoVia: varchar("conectado_via", { length: 20 }).notNull().default("manual"),
+    ultimaSincronizacao: timestamp("ultima_sincronizacao"),
     ativa: boolean("ativa").notNull().default(true),
     criadoEm: timestamp("criado_em").defaultNow(),
   },
@@ -54,6 +63,7 @@ export const contasSociais = mysqlTable(
       t.rede,
       t.identificador
     ),
+    unique("contas_sociais_instagram_user_unique").on(t.instagramUserId),
     index("contas_sociais_usuario_idx").on(t.usuarioId),
   ]
 );
@@ -82,6 +92,9 @@ export const posts = mysqlTable(
     dataAgendada: timestamp("data_agendada").notNull(),
     status: varchar("status", { length: 20 }).notNull().default("rascunho"),
     publicadoEm: timestamp("publicado_em"),
+    /** Id e link devolvidos pela Graph API quando a publicação é real. */
+    instagramMediaId: varchar("instagram_media_id", { length: 80 }),
+    publicadoUrl: varchar("publicado_url", { length: 255 }),
     criadoEm: timestamp("criado_em").defaultNow(),
     atualizadoEm: timestamp("atualizado_em").defaultNow().onUpdateNow(),
   },

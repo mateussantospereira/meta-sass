@@ -23,11 +23,25 @@ function ehAdmin(role: string): boolean {
   return role === "admin";
 }
 
-/** GET /api/contas-sociais */
+/** GET /api/contas-sociais — nunca expõe token, nem cifrado. */
 contas.get("/", async (c) => {
   const filtro = ehAdmin(c.get("role")) ? undefined : eq(contasSociais.usuarioId, c.get("usuarioId"));
   const linhas = await db
-    .select()
+    .select({
+      id: contasSociais.id,
+      usuarioId: contasSociais.usuarioId,
+      rede: contasSociais.rede,
+      nome: contasSociais.nome,
+      identificador: contasSociais.identificador,
+      instagramUserId: contasSociais.instagramUserId,
+      facebookPageId: contasSociais.facebookPageId,
+      username: contasSociais.username,
+      tokenExpiraEm: contasSociais.tokenExpiraEm,
+      conectadoVia: contasSociais.conectadoVia,
+      ultimaSincronizacao: contasSociais.ultimaSincronizacao,
+      ativa: contasSociais.ativa,
+      criadoEm: contasSociais.criadoEm,
+    })
     .from(contasSociais)
     .where(filtro)
     .orderBy(contasSociais.id);

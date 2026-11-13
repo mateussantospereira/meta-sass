@@ -224,6 +224,7 @@ Arquivos de migration:
 | `db/001_auth.sql` | Cria/completa `usuarios` e `reset_tokens`. |
 | `db/002_dominio.sql` | Cria `contas_sociais`, `posts`, `midias`, `aprovacoes`, `assinaturas`. |
 | `db/003_seed.sql` | Popula as contas de demonstração de forma idempotente. |
+| `db/004_instagram.sql` | Adiciona campos de conexão OAuth do Instagram e ids/URL da publicação real. |
 
 ---
 
@@ -288,6 +289,24 @@ O admin consulta os últimos eventos em **Painel → Auditoria** ou por
 
 ---
 
+## Integração real com o Instagram
+
+A conexão de conta usa o fluxo oficial da Meta:
+
+1. O usuário autenticado chama `GET /api/instagram/conectar` e o app devolve a URL do diálogo OAuth (state assinado com HMAC e validade de 10 minutos).
+2. A Meta redireciona para `GET /api/instagram/callback` (público), onde o `code` é trocado por token, o token é estendido e as Páginas com `instagram_business_account` são descobertas.
+3. O token da Página é **cifrado com AES-256-GCM** (`APP_ENCRYPTION_KEY`) e salvo em `contas_sociais.access_token_cifrado`; nenhuma API devolve esse campo.
+4. Ao publicar, o app gera uma URL pública assinada da mídia (`/api/midia-publica/:id?exp=&sig=`), cria o container na Graph API, aguarda `FINISHED` e chama `media_publish`, gravando `instagram_media_id` e `publicado_url` no post.
+
+Variáveis necessárias:
+
+- `META_APP_ID`, `META_APP_SECRET`
+- `META_REDIRECT_URI` (padrão: `<APP_PUBLIC_URL>/api/instagram/callback`)
+- `META_GRAPH_VERSION` (padrão: `v22.0`)
+- `APP_ENCRYPTION_KEY` (fixo; trocar invalida tokens já cifrados)
+
+Sem credenciais, o endpoint `/api/instagram/conectar` responde 503 e contas manuais continuam operando como simulação explícita.
+
 ## Mídia no MinIO
 
 - Bucket: `metasass-midias` (criado automaticamente no boot).
@@ -337,7 +356,7 @@ Todas as rotas abaixo, exceto login/cadastro/health, exigem
 | `GET` | `/api/posts/:id` | `ler:post` | Detalhe + mídias + aprovações + permissões. |
 | `PATCH` | `/api/posts/:id` | `editar:post` | Edita título, legenda, data, conta ou status. |
 | `DELETE` | `/api/posts/:id` | `apagar:post` | Apaga post, mídias e objetos do MinIO. |
-| `POST` | `/api/posts/:id/publicar` | `publicar:post` | Marca como publicado. |
+| `POST` | `/api/posts/:id/publicar` | `publicar:post` | Publica no Instagram via Graph API quando a conta foi conectada por OAuth; conta manual fica como simulação auditada. |
 | `POST` | `/api/posts/:id/aprovar` | `aprovar:post` | Cliente aprova ou pede ajustes. |
 | `POST` | `/api/posts/:id/midia` | `enviar:midia` | Upload de imagem. |
 | `GET` | `/api/posts/:id/midia/:midiaId/arquivo` | `ler:post` | Serve a imagem com checagem de dono. |
@@ -347,10 +366,15 @@ Todas as rotas abaixo, exceto login/cadastro/health, exigem
 
 | Método | Rota | Permissão |
 | --- | --- | --- |
-| `GET` | `/api/contas-sociais` | `ler:post` |
+| `GET` | `/api/contas-sociais` | autenticado |
 | `POST` | `/api/contas-sociais` | `gerenciar:contas` |
 | `PATCH` | `/api/contas-sociais/:id` | `gerenciar:contas` |
 | `DELETE` | `/api/contas-sociais/:id` | `gerenciar:contas` |
+| `GET` | `/api/instagram/status` | autenticado |
+| `GET` | `/api/instagram/conectar` | `gerenciar:contas` |
+| `GET` | `/api/instagram/callback` | público (state assinado) |
+| `POST` | `/api/instagram/:id/desconectar` | `gerenciar:contas` |
+| `GET` | `/api/midia-publica/:midiaId` | público (assinatura + expiração) |
 | `GET` | `/api/usuarios` | `listar:usuarios` |
 | `PATCH` | `/api/usuarios/:id/role` | `alterar:papel` |
 | `GET` | `/api/logs?limite=N` | `consultar:logs` |

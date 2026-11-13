@@ -1,13 +1,15 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import authRoutes from "./routes/auth";
-import postsRoutes from "./routes/posts";
+import postsRoutes, { midiaPublica } from "./routes/posts";
 import contasRoutes from "./routes/contas-sociais";
+import instagramRoutes from "./routes/instagram";
 import usuariosRoutes from "./routes/usuarios";
 import logsRoutes from "./routes/logs";
 import planoRoutes from "./routes/plano";
 import { auditoria403Middleware } from "./middleware/auditoria";
 import { garantirBucket, MINIO_BUCKET } from "./services/minio";
+import { instagramConfigurado } from "./services/instagram";
 
 /**
  * MetaSass — o único container com porta publicada.
@@ -24,6 +26,10 @@ app.use("*", auditoria403Middleware);
 app.route("/api", authRoutes);
 app.route("/api/posts", postsRoutes);
 app.route("/api/contas-sociais", contasRoutes);
+// OAuth oficial da Meta: conectar Instagram e desconectar conta.
+app.route("/api/instagram", instagramRoutes);
+// Link público e assinado que a Meta baixa para publicar a imagem.
+app.route("/api/midia-publica", midiaPublica);
 // Exclusivo de admin: listar usuários e trocar papel.
 app.route("/api/usuarios", usuariosRoutes);
 // Exclusivo de admin: consultar o stream de auditoria no Redis.
@@ -39,6 +45,7 @@ app.get("/api/health", (c) =>
     produto: "MetaSass",
     auth_service: process.env.AUTH_SERVICE_URL ?? "http://auth-service:3000",
     log_service: process.env.LOG_SERVICE_URL ?? "http://log-service:3000",
+    instagram_oauth: instagramConfigurado,
   })
 );
 

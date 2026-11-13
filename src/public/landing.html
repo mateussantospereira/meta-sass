@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MetaSass — planeje, aprove e publique suas redes sociais</title>
-  <meta name="description" content="MetaSass organiza o calendário de conteúdo, centraliza a aprovação do cliente e publica no Instagram e no Facebook. Comece grátis.">
-  <link rel="stylesheet" href="/style.css?v=1">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+  <meta name="description" content="MetaSass organiza o calendário de conteúdo, centraliza a aprovação do cliente e publica no Instagram. Comece grátis.">
+  <link rel="stylesheet" href="/style.css?v=3">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23111110'/%3E%3Ctext x='50' y='69' font-family='Arial,sans-serif' font-size='58' font-weight='700' fill='%23ffffff' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
 </head>
 <body>
   <nav class="landing-nav">
-    <a class="brand" href="/"><span class="brand-mark">✨</span> MetaSass</a>
+    <a class="brand" href="/"><span class="brand-mark">M</span> MetaSass</a>
     <div class="links">
       <a href="#recursos">Recursos</a>
       <a href="#como-funciona">Como funciona</a>
@@ -24,11 +24,11 @@
 
   <header class="hero">
     <div>
-      <span class="pill">🗓️ Conteúdo sem caos no WhatsApp</span>
+      <span class="pill">Planejamento editorial para Instagram</span>
       <h1>Planeje, aprove e publique. <span>Tudo em um só lugar.</span></h1>
       <p class="lead">
         O MetaSass organiza o calendário editorial da sua marca, centraliza a aprovação
-        do cliente e deixa cada post pronto para ir ao ar no Instagram e no Facebook.
+        do cliente e publica direto no Instagram pela API oficial da Meta.
         Sua equipe produz. Seu cliente aprova. A publicação não atrasa.
       </p>
       <div class="hero-actions">
@@ -87,34 +87,34 @@
     </div>
     <div class="cards">
       <article class="feature">
-        <div class="icon">🗓️</div>
+        <span class="idx">01</span>
         <h3>Calendário de posts</h3>
         <p>Agende cada conteúdo por data, rede social e conta. O painel mostra o que está em rascunho, aguardando aprovação ou já publicado.</p>
       </article>
       <article class="feature">
-        <div class="icon">✅</div>
+        <span class="idx">02</span>
         <h3>Aprovação do cliente</h3>
         <p>O cliente vê apenas os posts atribuídos a ele. Aprova ou pede ajustes com um comentário — e o histórico fica registrado.</p>
       </article>
       <article class="feature">
-        <div class="icon">🖼️</div>
-        <h3>Mídia organizada</h3>
-        <p>As imagens ficam no MinIO, vinculadas ao post certo. O banco guarda só a referência; o download passa pela checagem de dono.</p>
+        <span class="idx">03</span>
+        <h3>Publicação real no Instagram</h3>
+        <p>Conexão OAuth com a conta profissional da Meta. O post aprovado vira uma publicação de verdade pela Graph API, com o token guardado criptografado.</p>
       </article>
       <article class="feature">
-        <div class="icon">🔐</div>
+        <span class="idx">04</span>
+        <h3>Mídia organizada</h3>
+        <p>As imagens ficam no MinIO, vinculadas ao post certo. O banco guarda só a referência; o acesso passa pela checagem de dono.</p>
+      </article>
+      <article class="feature">
+        <span class="idx">05</span>
         <h3>Permissões de verdade</h3>
         <p>Três papéis com regras aplicadas no servidor. Esconder um botão não é segurança: a API recusa a ação proibida com 403.</p>
       </article>
       <article class="feature">
-        <div class="icon">📋</div>
-        <h3>Auditoria de negócio</h3>
-        <p>Quem criou, aprovou, publicou ou tentou acessar o que não podia. Cada evento vai para o Redis Stream e pode ser consultado pelo admin.</p>
-      </article>
-      <article class="feature">
-        <div class="icon">💳</div>
-        <h3>Plano Pro</h3>
-        <p>O gratuito permite 5 posts. O Pro libera posts ilimitados com checkout hospedado pelo Stripe — nenhum dado de cartão passa por aqui.</p>
+        <span class="idx">06</span>
+        <h3>Auditoria e plano Pro</h3>
+        <p>Quem criou, aprovou ou publicou vai para o Redis Stream. O gratuito permite 5 posts; o Pro libera posts ilimitados via Stripe.</p>
       </article>
     </div>
   </section>
@@ -127,8 +127,8 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <h3>Conecte suas contas</h3>
-        <p>Cadastre o perfil de Instagram ou Facebook que a marca usa. Cada conta fica vinculada a quem a cadastrou.</p>
+        <h3>Conecte o Instagram</h3>
+        <p>Autorize o MetaSass na conta profissional do Instagram vinculada a uma Página do Facebook. A conexão é feita pelo OAuth oficial.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -138,7 +138,7 @@
       <div class="step">
         <div class="step-num">3</div>
         <h3>Aprove e publique</h3>
-        <p>O cliente aprova ou pede ajustes. A equipe publica e o evento fica registrado na auditoria do sistema.</p>
+        <p>O cliente aprova ou pede ajustes. A equipe publica direto no perfil conectado e o evento fica na auditoria.</p>
       </div>
     </div>
   </section>
@@ -155,7 +155,7 @@
         <div class="price">R$ 0 <small>/mês</small></div>
         <ul>
           <li>Até 5 posts</li>
-          <li>Contas de Instagram e Facebook</li>
+          <li>Conexão real com Instagram</li>
           <li>Aprovação do cliente</li>
           <li>Upload de mídia no MinIO</li>
           <li>Auditoria de eventos</li>
@@ -180,13 +180,13 @@
 
   <section class="cta-final">
     <h2>Seu próximo post não precisa nascer no grupo da família.</h2>
-    <p>Crie sua conta, conecte uma conta social e agende o primeiro conteúdo em poucos minutos.</p>
+    <p>Crie sua conta, conecte o Instagram e agende o primeiro conteúdo em poucos minutos.</p>
     <a class="btn" href="/login?modo=cadastro">Criar conta gratuita</a>
   </section>
 
   <footer class="landing-footer">
     <span>© 2026 MetaSass · Planejamento e aprovação de conteúdo</span>
-    <span>Feito para Instagram e Facebook · Dados no seu próprio servidor</span>
+    <span>Instagram Graph API · Dados no seu próprio servidor</span>
   </footer>
 </body>
 </html>
