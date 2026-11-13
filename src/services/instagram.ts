@@ -29,14 +29,19 @@ const META_APP_SECRET = (process.env.META_APP_SECRET ?? "").trim();
 export const META_REDIRECT_URI =
   (process.env.META_REDIRECT_URI ?? "").trim() || `${APP_PUBLIC_URL}/api/instagram/callback`;
 
-/** Permissões necessárias para ler o perfil e publicar conteúdo. */
-const ESCOPOS = [
-  "instagram_basic",
-  "instagram_content_publish",
-  "pages_show_list",
-  "pages_read_engagement",
-  "business_management",
-].join(",");
+/**
+ * Permissões do OAuth. A lista varia conforme o tipo de login/produto
+ * configurado no app da Meta (ex.: Instagram Graph API com Login do Facebook).
+ * Pode ser sobrescrita por `META_SCOPES` (separadas por vírgula) sem rebuild.
+ */
+export const META_SCOPES = (
+  process.env.META_SCOPES ??
+  "pages_show_list,pages_read_engagement,instagram_basic,instagram_content_publish"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .join(",");
 
 export const instagramConfigurado = Boolean(META_APP_ID && META_APP_SECRET);
 
@@ -51,7 +56,7 @@ export function urlAutorizacao(state: string): string {
   url.searchParams.set("client_id", META_APP_ID);
   url.searchParams.set("redirect_uri", META_REDIRECT_URI);
   url.searchParams.set("state", state);
-  url.searchParams.set("scope", ESCOPOS);
+  url.searchParams.set("scope", META_SCOPES);
   url.searchParams.set("response_type", "code");
   return url.toString();
 }

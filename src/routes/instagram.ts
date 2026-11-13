@@ -11,6 +11,7 @@ import {
   APP_PUBLIC_URL,
   META_GRAPH_VERSION,
   META_REDIRECT_URI,
+  META_SCOPES,
   appIdPublico,
   estenderToken,
   instagramConfigurado,
@@ -138,13 +139,7 @@ ig.get("/status", async (c) => {
     redirectUri: META_REDIRECT_URI,
     versaoApi: META_GRAPH_VERSION,
     contasConectadas: Number(linha?.total ?? 0),
-    escopos: [
-      "instagram_basic",
-      "instagram_content_publish",
-      "pages_show_list",
-      "pages_read_engagement",
-      "business_management",
-    ],
+    escopos: META_SCOPES.split(",").filter(Boolean),
   });
 });
 
