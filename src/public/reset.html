@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova senha — MetaSass</title>
+  <link rel="stylesheet" href="/style.css?v=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+  <main class="auth-main" style="min-height:100vh">
+    <div class="auth-card">
+      <a class="brand" href="/" style="margin-bottom:20px"><span class="brand-mark">✨</span> MetaSass</a>
+      <h1>Definir nova senha</h1>
+      <p class="sub">O link é válido por 30 minutos e só pode ser usado uma vez.</p>
+
+      <form id="form-senha" onsubmit="doReset(event)">
+        <div class="field">
+          <label for="nova-senha">Nova senha</label>
+          <input class="input" type="password" id="nova-senha" placeholder="Mínimo de 6 caracteres" minlength="6" required>
+        </div>
+        <div class="field">
+          <label for="nova-senha-2">Repita a nova senha</label>
+          <input class="input" type="password" id="nova-senha-2" placeholder="Confirme a senha" minlength="6" required>
+        </div>
+        <button class="btn block" type="submit" id="btn-reset">Salvar nova senha</button>
+      </form>
+
+      <div id="form-sucesso" hidden>
+        <p class="sub">Senha alterada com sucesso. Faça login com a nova senha.</p>
+        <a class="btn block" href="/login">Ir para o login</a>
+      </div>
+
+      <p class="form-msg error" id="reset-msg"></p>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token") || "";
+    const msg = document.getElementById("reset-msg");
+
+    if (!token) {
+      document.getElementById("form-senha").hidden = true;
+      msg.textContent = "Link inválido. Peça um novo link de recuperação de senha.";
+    }
+
+    async function doReset(evento) {
+      evento.preventDefault();
+      const senha = document.getElementById("nova-senha").value;
+      const confirmacao = document.getElementById("nova-senha-2").value;
+      msg.textContent = "";
+      msg.className = "form-msg error";
+
+      if (senha.length < 6) { msg.textContent = "A nova senha deve ter no mínimo 6 caracteres."; return; }
+      if (senha !== confirmacao) { msg.textContent = "As senhas não conferem."; return; }
+
+      const botao = document.getElementById("btn-reset");
+      botao.disabled = true;
+      try {
+        const res = await fetch("/api/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, novaSenha: senha }),
+        });
+        const dados = await res.json().catch(() => null);
+        if (!res.ok) { msg.textContent = dados?.error || "Não foi possível trocar a senha."; return; }
+        document.getElementById("form-senha").hidden = true;
+        document.getElementById("form-sucesso").hidden = false;
+      } catch {
+        msg.textContent = "Erro de conexão. Tente novamente.";
+      } finally {
+        botao.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

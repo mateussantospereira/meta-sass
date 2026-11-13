@@ -1,0 +1,12 @@
+# O app e uma unidade de deploy separada dos outros servicos.
+auth-service
+log-service
+node_modules
+.git
+.gitignore
+docs
+scripts
+.env
+.env.*
+README.md
+docker-compose.yml

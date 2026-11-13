@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetaSass — planeje, aprove e publique suas redes sociais</title>
+  <meta name="description" content="MetaSass organiza o calendário de conteúdo, centraliza a aprovação do cliente e publica no Instagram e no Facebook. Comece grátis.">
+  <link rel="stylesheet" href="/style.css?v=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+  <nav class="landing-nav">
+    <a class="brand" href="/"><span class="brand-mark">✨</span> MetaSass</a>
+    <div class="links">
+      <a href="#recursos">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#planos">Planos</a>
+    </div>
+    <div class="nav-actions">
+      <a class="btn ghost" href="/login">Entrar</a>
+      <a class="btn" href="/login?modo=cadastro">Começar grátis</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="pill">🗓️ Conteúdo sem caos no WhatsApp</span>
+      <h1>Planeje, aprove e publique. <span>Tudo em um só lugar.</span></h1>
+      <p class="lead">
+        O MetaSass organiza o calendário editorial da sua marca, centraliza a aprovação
+        do cliente e deixa cada post pronto para ir ao ar no Instagram e no Facebook.
+        Sua equipe produz. Seu cliente aprova. A publicação não atrasa.
+      </p>
+      <div class="hero-actions">
+        <a class="btn" href="/login?modo=cadastro">Criar minha conta grátis</a>
+        <a class="btn ghost" href="/login">Já tenho conta</a>
+      </div>
+      <p class="hero-note">Plano gratuito com <strong>5 posts</strong>. Sem cartão de crédito para começar.</p>
+    </div>
+
+    <div class="hero-visual">
+      <div class="mockup" aria-hidden="true">
+        <div class="mockup-top">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="mockup-title">Calendário editorial · Novembro</span>
+        </div>
+        <div class="mockup-grid">
+          <div class="mockup-day"></div>
+          <div class="mockup-day post"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day ok"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day post"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day post"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day ok"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day"></div>
+          <div class="mockup-day post"></div>
+        </div>
+        <div class="mockup-row">
+          <span class="avatar"></span>
+          <span class="grow">Reels · Coleção verão</span>
+          <span class="badge-status aprovado">aprovado</span>
+        </div>
+        <div class="mockup-row">
+          <span class="avatar"></span>
+          <span class="grow">Carrossel · Bastidores</span>
+          <span class="badge-status agendado">agendado</span>
+        </div>
+        <div class="mockup-row">
+          <span class="avatar"></span>
+          <span class="grow">Story · Promoção</span>
+          <span class="badge-status publicado">publicado</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="section" id="recursos">
+    <div class="section-head">
+      <div class="eyebrow">Feito para quem vive de conteúdo</div>
+      <h2>O fluxo inteiro, do rascunho ao publicado</h2>
+      <p>Agências, social medias e marcas que precisam de previsibilidade — sem planilha paralela e sem perder a aprovação no meio do caminho.</p>
+    </div>
+    <div class="cards">
+      <article class="feature">
+        <div class="icon">🗓️</div>
+        <h3>Calendário de posts</h3>
+        <p>Agende cada conteúdo por data, rede social e conta. O painel mostra o que está em rascunho, aguardando aprovação ou já publicado.</p>
+      </article>
+      <article class="feature">
+        <div class="icon">✅</div>
+        <h3>Aprovação do cliente</h3>
+        <p>O cliente vê apenas os posts atribuídos a ele. Aprova ou pede ajustes com um comentário — e o histórico fica registrado.</p>
+      </article>
+      <article class="feature">
+        <div class="icon">🖼️</div>
+        <h3>Mídia organizada</h3>
+        <p>As imagens ficam no MinIO, vinculadas ao post certo. O banco guarda só a referência; o download passa pela checagem de dono.</p>
+      </article>
+      <article class="feature">
+        <div class="icon">🔐</div>
+        <h3>Permissões de verdade</h3>
+        <p>Três papéis com regras aplicadas no servidor. Esconder um botão não é segurança: a API recusa a ação proibida com 403.</p>
+      </article>
+      <article class="feature">
+        <div class="icon">📋</div>
+        <h3>Auditoria de negócio</h3>
+        <p>Quem criou, aprovou, publicou ou tentou acessar o que não podia. Cada evento vai para o Redis Stream e pode ser consultado pelo admin.</p>
+      </article>
+      <article class="feature">
+        <div class="icon">💳</div>
+        <h3>Plano Pro</h3>
+        <p>O gratuito permite 5 posts. O Pro libera posts ilimitados com checkout hospedado pelo Stripe — nenhum dado de cartão passa por aqui.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="como-funciona">
+    <div class="section-head">
+      <div class="eyebrow">Como funciona</div>
+      <h2>Três passos e o conteúdo está no ar</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Conecte suas contas</h3>
+        <p>Cadastre o perfil de Instagram ou Facebook que a marca usa. Cada conta fica vinculada a quem a cadastrou.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Planeje e envie</h3>
+        <p>Crie o post com título, legenda, data e imagem. Atribua um cliente para revisar quando for o caso.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Aprove e publique</h3>
+        <p>O cliente aprova ou pede ajustes. A equipe publica e o evento fica registrado na auditoria do sistema.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="planos">
+    <div class="section-head">
+      <div class="eyebrow">Planos</div>
+      <h2>Comece grátis. Cresça quando precisar.</h2>
+      <p>Sem fidelidade e sem cartão no plano gratuito.</p>
+    </div>
+    <div class="pricing">
+      <article class="plan">
+        <h3>Gratuito</h3>
+        <div class="price">R$ 0 <small>/mês</small></div>
+        <ul>
+          <li>Até 5 posts</li>
+          <li>Contas de Instagram e Facebook</li>
+          <li>Aprovação do cliente</li>
+          <li>Upload de mídia no MinIO</li>
+          <li>Auditoria de eventos</li>
+        </ul>
+        <a class="btn ghost block" href="/login?modo=cadastro">Começar grátis</a>
+      </article>
+      <article class="plan destaque">
+        <span class="tag">MAIS ESCOLHIDO</span>
+        <h3>Pro</h3>
+        <div class="price">R$ 29,00 <small>/mês</small></div>
+        <ul>
+          <li>Posts ilimitados</li>
+          <li>Tudo do plano gratuito</li>
+          <li>Checkout seguro pelo Stripe</li>
+          <li>Ativação automática por webhook</li>
+          <li>Ideal para agências e social medias</li>
+        </ul>
+        <a class="btn block" href="/login?modo=cadastro">Assinar o Pro</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <h2>Seu próximo post não precisa nascer no grupo da família.</h2>
+    <p>Crie sua conta, conecte uma conta social e agende o primeiro conteúdo em poucos minutos.</p>
+    <a class="btn" href="/login?modo=cadastro">Criar conta gratuita</a>
+  </section>
+
+  <footer class="landing-footer">
+    <span>© 2026 MetaSass · Planejamento e aprovação de conteúdo</span>
+    <span>Feito para Instagram e Facebook · Dados no seu próprio servidor</span>
+  </footer>
+</body>
+</html>

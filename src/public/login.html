@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — MetaSass</title>
+  <meta name="description" content="Acesse o painel MetaSass para planejar, aprovar e publicar conteúdo.">
+  <link rel="stylesheet" href="/style.css?v=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+  <div class="auth-page">
+    <aside class="auth-aside">
+      <a class="brand" href="/"><span class="brand-mark">✨</span> MetaSass</a>
+      <h2>O conteúdo da sua marca, aprovado e publicado sem correria.</h2>
+      <p>Entre para organizar o calendário, enviar mídias e acompanhar cada aprovação em tempo real.</p>
+      <ul>
+        <li>Planejamento por data e rede social</li>
+        <li>Aprovação do cliente registrada no histórico</li>
+        <li>Auditoria de cada ação importante</li>
+      </ul>
+      <div class="mini-mock">
+        <strong>Ambiente de demonstração</strong>
+        <span>Use uma das contas de teste ao lado para explorar os três papéis do sistema.</span>
+      </div>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h1 id="auth-title">Entrar no MetaSass</h1>
+        <p class="sub" id="auth-sub">Acesse o painel para gerenciar seus posts.</p>
+
+        <div class="auth-tabs" role="tablist">
+          <button type="button" id="tab-login" class="active" onclick="mostrar('login')">Entrar</button>
+          <button type="button" id="tab-register" onclick="mostrar('register')">Criar conta</button>
+        </div>
+
+        <form id="form-login" onsubmit="doLogin(event)">
+          <div class="field">
+            <label for="login-email">E-mail</label>
+            <input class="input" type="email" id="login-email" placeholder="voce@empresa.com" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="login-senha">Senha</label>
+            <input class="input" type="password" id="login-senha" placeholder="Sua senha" autocomplete="current-password" required>
+          </div>
+          <button class="btn block" type="submit" id="btn-login">Entrar</button>
+          <div class="link-row">
+            <a href="#" onclick="mostrar('forgot'); return false;">Esqueci minha senha</a>
+            <a href="/">Voltar ao site</a>
+          </div>
+        </form>
+
+        <form id="form-register" onsubmit="doRegister(event)" hidden>
+          <div class="field">
+            <label for="reg-nome">Nome</label>
+            <input class="input" type="text" id="reg-nome" placeholder="Como devemos te chamar" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="reg-email">E-mail</label>
+            <input class="input" type="email" id="reg-email" placeholder="voce@empresa.com" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="reg-senha">Senha</label>
+            <input class="input" type="password" id="reg-senha" placeholder="Mínimo de 6 caracteres" autocomplete="new-password" minlength="6" required>
+          </div>
+          <button class="btn block" type="submit" id="btn-register">Criar conta gratuita</button>
+          <div class="link-row">
+            <span>Ao criar a conta você começa com o papel <strong>social_media</strong>.</span>
+          </div>
+        </form>
+
+        <form id="form-forgot" onsubmit="doForgot(event)" hidden>
+          <p class="sub" style="margin-bottom:16px">
+            Informe seu e-mail e enviaremos um link para criar uma nova senha. O link vale por 30 minutos.
+          </p>
+          <div class="field">
+            <label for="forgot-email">E-mail</label>
+            <input class="input" type="email" id="forgot-email" placeholder="voce@empresa.com" autocomplete="email" required>
+          </div>
+          <button class="btn block" type="submit" id="btn-forgot">Enviar link de recuperação</button>
+          <div class="link-row">
+            <a href="#" onclick="mostrar('login'); return false;">Voltar para o login</a>
+          </div>
+        </form>
+
+        <p class="form-msg" id="auth-msg"></p>
+
+        <div class="demo-box">
+          <strong>Contas de demonstração</strong>
+          <div class="demo-chips">
+            <button type="button" class="demo-chip" onclick="preencher('admin@metasass.app','Admin@123')">admin</button>
+            <button type="button" class="demo-chip" onclick="preencher('social@metasass.app','Social@123')">social_media</button>
+            <button type="button" class="demo-chip" onclick="preencher('cliente@metasass.app','Cliente@123')">cliente</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const mensagem = document.getElementById("auth-msg");
+
+    function mostrar(qual) {
+      ["login", "register", "forgot"].forEach((id) => {
+        document.getElementById("form-" + id).hidden = id !== qual;
+      });
+      document.getElementById("tab-login").classList.toggle("active", qual === "login");
+      document.getElementById("tab-register").classList.toggle("active", qual === "register");
+      document.getElementById("auth-title").textContent =
+        qual === "login" ? "Entrar no MetaSass" : qual === "register" ? "Criar conta no MetaSass" : "Recuperar senha";
+      document.getElementById("auth-sub").textContent =
+        qual === "login" ? "Acesse o painel para gerenciar seus posts."
+        : qual === "register" ? "Comece grátis com até 5 posts."
+        : "Vamos enviar um link de redefinição para o seu e-mail.";
+      mensagem.textContent = "";
+      mensagem.className = "form-msg";
+    }
+
+    function preencher(email, senha) {
+      mostrar("login");
+      document.getElementById("login-email").value = email;
+      document.getElementById("login-senha").value = senha;
+      document.getElementById("login-senha").focus();
+    }
+
+    function avisar(texto, tipo) {
+      mensagem.textContent = texto;
+      mensagem.className = "form-msg " + (tipo || "error");
+    }
+
+    async function doLogin(evento) {
+      evento.preventDefault();
+      const botao = document.getElementById("btn-login");
+      botao.disabled = true;
+      avisar("Entrando...", "ok");
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("login-email").value.trim(),
+            senha: document.getElementById("login-senha").value,
+          }),
+        });
+        const dados = await res.json().catch(() => null);
+        if (!res.ok) { avisar(dados?.error || "Não foi possível entrar."); return; }
+        localStorage.setItem("token", dados.token);
+        localStorage.setItem("nome", dados.nome);
+        window.location.href = "/painel";
+      } catch {
+        avisar("Erro de conexão. Tente novamente.");
+      } finally {
+        botao.disabled = false;
+      }
+    }
+
+    async function doRegister(evento) {
+      evento.preventDefault();
+      const botao = document.getElementById("btn-register");
+      botao.disabled = true;
+      avisar("Criando conta...", "ok");
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nome: document.getElementById("reg-nome").value.trim(),
+            email: document.getElementById("reg-email").value.trim(),
+            senha: document.getElementById("reg-senha").value,
+          }),
+        });
+        const dados = await res.json().catch(() => null);
+        if (!res.ok) { avisar(dados?.error || "Não foi possível criar a conta."); return; }
+        document.getElementById("login-email").value = document.getElementById("reg-email").value.trim();
+        document.getElementById("login-senha").value = "";
+        mostrar("login");
+        avisar("Conta criada com sucesso! Faça login para entrar.", "ok");
+      } catch {
+        avisar("Erro de conexão. Tente novamente.");
+      } finally {
+        botao.disabled = false;
+      }
+    }
+
+    async function doForgot(evento) {
+      evento.preventDefault();
+      const botao = document.getElementById("btn-forgot");
+      botao.disabled = true;
+      avisar("Enviando...", "ok");
+      try {
+        const res = await fetch("/api/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: document.getElementById("forgot-email").value.trim() }),
+        });
+        const dados = await res.json().catch(() => null);
+        if (!res.ok) { avisar(dados?.error || "Não foi possível enviar o link."); return; }
+        mostrar("login");
+        avisar(dados?.message || "Se houver uma conta com esse e-mail, enviaremos um link.", "ok");
+      } catch {
+        avisar("Erro de conexão. Tente novamente.");
+      } finally {
+        botao.disabled = false;
+      }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("modo") === "cadastro") mostrar("register");
+    if (localStorage.getItem("token")) window.location.href = "/painel";
+  </script>
+</body>
+</html>

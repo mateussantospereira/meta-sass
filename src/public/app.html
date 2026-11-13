@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel — MetaSass</title>
+  <link rel="stylesheet" href="/style.css?v=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/painel"><span class="brand-mark">✨</span> MetaSass</a>
+    <span class="grow"></span>
+    <span id="plano-badge" class="role-badge" hidden>Gratuito</span>
+    <div class="user-box">
+      <div class="user-meta">
+        <strong id="user-name">Carregando...</strong>
+        <span id="user-email"></span>
+      </div>
+      <span id="user-role" class="role-badge">—</span>
+      <button class="btn ghost small" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <button class="nav-item active" data-tab="posts" onclick="abrirTab('posts')"><span class="ico">🗓️</span> Posts</button>
+      <button class="nav-item" data-tab="contas" id="nav-contas" onclick="abrirTab('contas')"><span class="ico">🔗</span> Contas sociais</button>
+      <button class="nav-item" data-tab="usuarios" id="nav-usuarios" onclick="abrirTab('usuarios')" hidden><span class="ico">👥</span> Usuários</button>
+      <button class="nav-item" data-tab="logs" id="nav-logs" onclick="abrirTab('logs')" hidden><span class="ico">📋</span> Auditoria</button>
+      <button class="nav-item" data-tab="plano" onclick="abrirTab('plano')"><span class="ico">💳</span> Meu plano</button>
+      <div class="side-card" id="side-card">
+        <strong id="side-title">Painel</strong>
+        <span id="side-text">Carregando informações…</span>
+      </div>
+    </aside>
+
+    <main>
+      <!-- POSTS -->
+      <section id="tab-posts">
+        <div class="page-head">
+          <div>
+            <h1 id="posts-title">Posts</h1>
+            <p id="posts-sub">Planeje, aprove e publique o conteúdo da marca.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost small" onclick="carregarPosts()">↻ Atualizar</button>
+            <button class="btn small" id="btn-novo-post" onclick="abrirNovoPost()">+ Novo post</button>
+          </div>
+        </div>
+
+        <div class="stats" id="stats-posts">
+          <div class="stat purple"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
+          <div class="stat"><div class="label">Agendados</div><div class="value" id="stat-agendados">—</div></div>
+          <div class="stat amber"><div class="label">Aguardando</div><div class="value" id="stat-aguardando">—</div></div>
+          <div class="stat green"><div class="label">Publicados</div><div class="value" id="stat-publicados">—</div></div>
+        </div>
+
+        <div id="posts-loading" class="empty">Carregando posts…</div>
+        <div id="posts-grid" class="posts" hidden></div>
+        <div id="posts-empty" class="panel" hidden><div class="empty">Nenhum post por aqui ainda. Crie o primeiro no botão “+ Novo post”.</div></div>
+      </section>
+
+      <!-- CONTAS -->
+      <section id="tab-contas" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Contas sociais</h1>
+            <p>Perfis de Instagram e Facebook usados nos posts.</p>
+          </div>
+        </div>
+        <div class="panel" id="painel-form-conta">
+          <div class="panel-head"><h2>Conectar conta</h2></div>
+          <div class="panel-body">
+            <form onsubmit="criarConta(event)" class="form-grid">
+              <div class="field">
+                <label for="conta-rede">Rede</label>
+                <select class="input" id="conta-rede" required>
+                  <option value="instagram">Instagram</option>
+                  <option value="facebook">Facebook</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="conta-nome">Nome da conta</label>
+                <input class="input" id="conta-nome" placeholder="Ex.: @minha.marca" required maxlength="120">
+              </div>
+              <div class="field full">
+                <label for="conta-identificador">Identificador (opcional)</label>
+                <input class="input" id="conta-identificador" placeholder="Ex.: 17841400000000000" maxlength="160">
+              </div>
+              <div class="full" style="display:flex;justify-content:flex-end">
+                <button class="btn" type="submit">Conectar conta</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:18px">
+          <div class="panel-head"><h2>Contas conectadas</h2><span class="tag" id="contas-total">0</span></div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th>Rede</th><th>Nome</th><th>Identificador</th><th>Status</th><th></th></tr></thead>
+              <tbody id="contas-linhas"></tbody>
+            </table>
+          </div>
+          <div id="contas-vazio" class="empty">Nenhuma conta conectada ainda.</div>
+        </div>
+      </section>
+
+      <!-- USUÁRIOS (admin) -->
+      <section id="tab-usuarios" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Usuários</h1>
+            <p>Administre os papéis. Clientes só acessam os posts atribuídos a eles.</p>
+          </div>
+          <button class="btn ghost small" onclick="carregarUsuarios()">↻ Atualizar</button>
+        </div>
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th>Nome</th><th>E-mail</th><th>Plano</th><th>Papel</th></tr></thead>
+              <tbody id="usuarios-linhas"></tbody>
+            </table>
+          </div>
+          <div id="usuarios-vazio" class="empty" hidden>Nenhum usuário encontrado.</div>
+        </div>
+      </section>
+
+      <!-- AUDITORIA (admin) -->
+      <section id="tab-logs" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Auditoria</h1>
+            <p>Eventos de negócio gravados no Redis Stream pelo log-service.</p>
+          </div>
+          <button class="btn ghost small" onclick="carregarLogs()">↻ Atualizar</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Últimos eventos</h2><span class="tag" id="logs-total">0</span></div>
+          <div class="panel-body">
+            <div id="logs-lista" class="log-list"></div>
+            <div id="logs-vazio" class="empty">Nenhum evento registrado ainda.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLANO -->
+      <section id="tab-plano" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Meu plano</h1>
+            <p>Controle o limite de posts e assine o Pro quando precisar.</p>
+          </div>
+        </div>
+        <div id="plano-conteudo"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: novo/editar post -->
+  <div class="modal" id="modal-post" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modal-post-titulo">Novo post</h2>
+        <button class="modal-close" type="button" onclick="fecharModal('modal-post')">×</button>
+      </div>
+      <form id="form-post" onsubmit="salvarPost(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="post-titulo">Título</label>
+              <input class="input" id="post-titulo" maxlength="180" placeholder="Ex.: Reels de lançamento da coleção" required>
+            </div>
+            <div class="field full">
+              <label for="post-legenda">Legenda</label>
+              <textarea class="input" id="post-legenda" placeholder="Texto que acompanha a publicação…" maxlength="2000"></textarea>
+            </div>
+            <div class="field">
+              <label for="post-conta">Conta social</label>
+              <select class="input" id="post-conta" required></select>
+            </div>
+            <div class="field">
+              <label for="post-data">Data e hora agendada</label>
+              <input class="input" type="datetime-local" id="post-data" required>
+            </div>
+            <div class="field">
+              <label for="post-status">Status</label>
+              <select class="input" id="post-status">
+                <option value="rascunho">Rascunho</option>
+                <option value="agendado" selected>Agendado</option>
+                <option value="aprovado">Aprovado</option>
+                <option value="publicado">Publicado</option>
+                <option value="ajustes">Ajustes</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="field" id="campo-cliente" hidden>
+              <label for="post-cliente">Cliente responsável</label>
+              <select class="input" id="post-cliente">
+                <option value="">— sem cliente —</option>
+              </select>
+            </div>
+          </div>
+          <p class="form-msg" id="post-form-msg"></p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" type="button" onclick="fecharModal('modal-post')">Cancelar</button>
+          <button class="btn" type="submit" id="btn-salvar-post">Salvar post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: detalhe do post -->
+  <div class="modal" id="modal-detalhe" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="detalhe-titulo">Detalhe do post</h2>
+        <button class="modal-close" type="button" onclick="fecharModal('modal-detalhe')">×</button>
+      </div>
+      <div class="modal-body" id="detalhe-corpo"></div>
+      <div class="modal-foot" id="detalhe-acoes"></div>
+    </div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <script src="/app.js?v=1"></script>
+</body>
+</html>

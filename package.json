@@ -1,31 +1,26 @@
 {
-  "name": "meta-sass",
+  "name": "metasass",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.1",
   "type": "module",
+  "description": "MetaSass — planejamento, aprovação e publicação de conteúdo para Instagram e Facebook",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "db:migrate": "bun run src/db/migrate.ts",
+    "db:seed": "bun run src/db/seed.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^6.3.0",
-    "lucide-react": "^0.460.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^6.28.0",
-    "tailwindcss": "^3.4.14",
-    "tailwindcss-animate": "^1.0.7"
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.28",
+    "minio": "^8.0.7",
+    "mysql2": "^3.23.3",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.19",
-    "better-sqlite3": "^11.7.0",
-    "drizzle-kit": "^0.24.2",
-    "drizzle-orm": "^0.33.0",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.37.2",
-    "globals": "^15.0.0",
-    "vite": "^5.4.0"
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^5.9.3"
   }
 }
